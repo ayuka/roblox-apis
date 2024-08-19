@@ -1,8 +1,20 @@
 openapi: "3.0.3"
 info:
-  title: apis.roblox.com
-  description: ""
-  version: "1.0"
+  title: BEDEV2 - apis.roblox.com
+  description: |
+    ## Notes
+    - The terms "game", "universe", and "experience" are interchangable.
+    - "Developer Product ID" is separate from "Product ID"
+      - The "Product ID" is what most people are familiar with, while "Developer Product ID" is something seperate that's used internally.
+    - "BrowserTrackerID" is the "RBXEventTrackerV2" cookie
+    - "SessionID" for Discovery API is the "RBXSessionTracker" cookie
+
+    ## TODO
+    - Add /discovery-api/ endpoints
+    - Add /universes/v1/search endpoint (this is limited to your own universes)
+    - Add /universe-analytics-raqi/ endpoints
+    - Add /developer-analytics-aggregations/ endpoints
+  version: ""
 servers:
   - url: https://apis.roblox.com/
 
@@ -26,6 +38,8 @@ paths:
   /game-passes/v1/game-passes: # Create a Gamepass
     post:
       summary: Create a Gamepass
+      security:
+        - UserAccount: []
       tags:
         - Gamepasses
       requestBody:
@@ -69,6 +83,9 @@ paths:
     post:
       summary: Update a Gamepass
       description: Update a Gamepass. This requires authentication.
+      security:
+        - UserAccount: []
+        - CSRF: []
       tags:
         - Gamepasses
       parameters:
@@ -112,6 +129,35 @@ paths:
 
   # Developer Products
   /developer-products/v1/universes/{universeId}/developerproducts: # Create a Developer Product
+    get:
+      summary: Get Developer Products for a Universe
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: pageNumber
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 50
+      tags:
+        - Developer Products
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperProduct_GetUniverseProductsResponse"
     post:
       summary: Create a Developer Product
       description: Create a Developer Product. This requires authentication.
@@ -195,7 +241,7 @@ paths:
     get:
       summary: Update a Developer Product
       security:
-        - OpenCloudAPIKey: []
+        - UserAccount: []
 
       parameters:
         - name: universeId
@@ -210,6 +256,11 @@ paths:
             type: integer
       tags:
         - Developer Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeveloperProduct_UpdateBody"
       responses:
         "200":
           description: OK
@@ -217,12 +268,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EmptyBody"
+  /developer-products/v1/developer-products/{devProductId}/image:
+    post:
+      summary: Update a Developer Product's image
+      description: Update a Developer Product's image. This requires authentication.
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Developer Products
+      parameters:
+        - name: devProductId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/DeveloperProduct_UpdateImageBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperProduct_UpdateImageResponse"
 
   # Assets
   /assets/user-auth/v1/assets/{assetId}:
     get:
-      summary: Get uploaded asset metadata (not extensive)
-      description: Get the metadata of an uploaded asset. This does not require authentication.
+      summary: Get asset creation details
+      description: Get the metadata of an uploaded asset. This does not require authentication... for some reason.
       parameters:
         - name: assetId
           in: path
@@ -244,6 +322,70 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Assets_BadRequestResponse"
+
+  # Asset Permissions
+  /asset-permissions-api/v1/assets/check-permissions:
+    post:
+      summary: Check if subject has permission to manage an asset
+      description: "You must have permission for the Subject. For example, if the subject is a User, you must be that user."
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Asset Permissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetPermissions_CheckPermissionsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetPermissions_CheckPermissionsResponse"
+  /asset-permissions-api/v1/assets/{assetId}/permissions:
+    patch:
+      summary: Grant a universe permission to use this asset
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Asset Permissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetPermissions_GrantPermissionsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyBody"
+
+  # Asset Text Filter Settings
+  /asset-text-filter-settings/public/universe/{universeId}:
+    get:
+      summary: Get asset text filter settings for a Universe
+      security: []
+      tags:
+        - Asset Text Filter Settings
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetTextFilterSettings_GetUniverseResponse"
 
   # Universes
   /universes/v1/universes/create:
@@ -290,6 +432,298 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Universe_CreatePlaceResponse"
+  /universes/v1/places/{placeId}/universe:
+    get:
+      summary: Get the Universe ID of a place
+      security: []
+      tags:
+        - Universes
+      parameters:
+        - name: placeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Universe_GetUniverseResponse"
+
+  # User Profile
+  /user-profile-api/v1/user/profiles/get-profiles:
+    post:
+      summary: Get user profiles
+      security: []
+      tags:
+        - User Profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfile_GetProfilesBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile_GetProfilesResponse"
+
+  # User Settings
+  /user-settings-api/v1/user-settings:
+    get:
+      summary: Get user settings
+      security:
+        - BrowserTrackerID: []
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - User Settings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings_GetSettingsResponse"
+    post:
+      summary: Update user settings
+      description: This accepts partial settings data. Settings that change other settings is *likely* what is returned within the `cascadingSettingUpdates` property.
+      security:
+        - BrowserTrackerID: []
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - User Settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSettings_SetSettingsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings_SetSettingsResponse"
+
+  # Marketplace Items
+  /marketplace-items/v1/items/details:
+    post:
+      summary: Get marketplace item details
+      description: This will **always** return 200 OK, even if invalid data is passed or the item doesn't exist.
+      security: []
+      tags:
+        - Marketplace Items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketplaceItems_DetailsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceItems_DetailsResponse"
+  /marketplace-sales/v1/item/{collectibleItemId}/resellers:
+    get:
+      summary: Get marketplace item resellers
+      description: "**Note:** This endpoint is on **/marketplace-sales** and not **/marketplace-items**."
+      parameters:
+        - name: collectibleItemId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "00000000-0000-0000-0000-000000000000"
+        - name: limit
+          in: query
+          required: true
+          description: There is no real limit, but it will timeout if it takes too long. Be reasonable.
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: cursor
+          in: query
+          required: false
+          description: The cursor to use for pagination.
+          schema:
+            type: string
+      tags:
+        - Marketplace Items
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketplaceItems_ResellersResponse"
+
+  # Account Switcher
+  /account-switcher/v1/getLoggedInUsersMetadata:
+    post:
+      summary: Get all accounts logged in
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Account Switcher
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountSwitcher_GetLoggedInUsersMetadataBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountSwitcher_GetLoggedInUsersMetadataResponse"
+
+  # Profile Insights
+  /profile-insights/v1/multiProfileInsights:
+    post:
+      summary: Get profile insights for multiple users
+      description: |
+        Objects such as `mutualFriendInsight` and `offlineFrequentsInsight` only exist if the `insightCase` matches their respective case ID.
+
+        ## Insight Cases
+        - 1: Mutual Friends
+        - 3: Offline Frequents
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Profile Insights
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInsights_GetMultiInsightsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileInsights_GetMultiInsightsResponse"
+
+  # Profile Platform
+  /profile-platform/v1/profile/get:
+    post:
+      summary: Get profile platform data
+      security: []
+      tags:
+        - Profile Platform
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfilePlatform_GetBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfilePlatform_GetResponse"
+
+  # Community
+  /community-links/v1/universes/{universeId}/community:
+    get:
+      summary: Get Guilded community info for a Universe
+      security:
+        - UserAccount: []
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Community
+      responses:
+        "204":
+          description: No community found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyBody"
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Community_GetUniverseCommunityResponse"
+
+  # Voting
+  /voting-api/user/get-vote-count:
+    get:
+      summary: Get a count of how many times you've voted for a type of asset.
+      security:
+        - UserAccount: []
+      tags:
+        - Voting
+      parameters:
+        - name: targetType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: ["Place", "Image", "Audio", "Model"]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Voting_GetVoteCountResponse"
+
+  # Phone Numbers
+  /phone-number-api/v1/phone-prefix-list:
+    get:
+      summary: Get phone number prefix list for countries
+      security: []
+      tags:
+        - Phone Numbers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneNumber_PhonePrefixListResponse"
+
+  # Share Links
+  /sharelinks/v1/get-or-create-link:
+    post:
+      summary: Get or create a share link (QR codes)
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Share Links
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShareLinks_GetOrCreateLinkBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareLinks_GetOrCreateLinkResponse"
 
 components:
   schemas:
@@ -616,9 +1050,26 @@ components:
           type: string
           description: The description of the Developer Product.
         PriceInRobux:
-          example: null
           type: integer
           description: The price of the Developer Product in Robux.
+    DeveloperProduct_UpdateImageBody:
+      type: object
+      properties:
+        imageFile:
+          type: string
+          format: binary
+          description: The image to upload.
+    DeveloperProduct_UpdateImageResponse:
+      type: object
+      properties:
+        imageAssetId:
+          type: integer
+          description: The Developer Product's new icon image asset ID.
+    DeveloperProduct_GetUniverseProductsResponse:
+      type: array
+      items:
+        type: object
+        $ref: "#/components/schemas/DeveloperProduct_CreateResponse"
 
     # Assets
     Assets_MetadataResponse:
@@ -667,6 +1118,79 @@ components:
         message:
           type: string
 
+    # Asset Permissions
+    AssetPermissions_CheckPermissionsBody:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            properties:
+              subject:
+                type: object
+                properties:
+                  subjectType:
+                    type: string
+                    enum: ["User", "Group"]
+                  subjectId:
+                    type: integer
+              action:
+                type: string
+                enum: ["Edit"] # TODO: figure out what other values this can be
+              assetId:
+                type: integer
+    AssetPermissions_CheckPermissionsResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: object
+                nullable: true
+                properties:
+                  status:
+                    type: string
+                    enum: ["NoPermission", "HasPermission"]
+              error:
+                type: object
+                nullable: true
+                properties:
+                  code:
+                    type: string
+                    enum: ["CannotManageSubject"]
+                  message:
+                    type: string
+    AssetPermissions_GrantPermissionsBody:
+      type: object
+      properties:
+        requests:
+          type: array
+          items:
+            type: object
+            properties:
+              subject:
+                type: object
+                properties:
+                  subjectType:
+                    type: string
+                    enum: ["Universe"]
+                  subjectId:
+                    type: integer
+              action:
+                type: string
+                enum: ["Use"]
+
+    # Asset Text Filter Settings
+    AssetTextFilterSettings_GetUniverseResponse:
+      type: object
+      properties:
+        Profanity:
+          type: boolean
+
     # Universes
     Universe_CreateBody:
       type: object
@@ -690,6 +1214,12 @@ components:
         placeId:
           type: integer
           description: The place ID.
+    Universe_GetUniverseResponse:
+      type: object
+      properties:
+        universeId:
+          type: integer
+          description: The Universe ID.
 
     # User Profile
     UserProfile_FieldsEnum:
@@ -715,6 +1245,567 @@ components:
           items:
             type: string
             $ref: "#/components/schemas/UserProfile_FieldsEnum"
+    UserProfile_GetProfilesResponse:
+      type: object
+      properties:
+        errors:
+          type: array # TODO: figure out what errors this returns
+          example: []
+        profileDetails:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: integer
+              names:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    nullable: true
+                  combinedName:
+                    type: string
+                    nullable: true
+                  alias:
+                    type: string
+                    nullable: true
+                  displayName:
+                    type: string
+                  contactName:
+                    type: string
+                    nullable: true
+                  platformName:
+                    type: string
+                    nullable: true
+
+    # User Settings
+    UserSettings_SetSettingsBody:
+      type: object
+      anyOf:
+        - $ref: "#/components/schemas/UserSettings_GetSettingsResponse"
+    UserSettings_SetSettingsResponse:
+      type: object
+      properties:
+        cascadingSettingUpdates:
+          type: object
+          default: {}
+    UserSettings_GetSettingsResponse:
+      type: object
+      properties:
+        phoneNumberDiscoverability:
+          type: string
+          enum: ["NotDiscoverable", "Discoverable"]
+          description: Whether the user can be discovered by phone number.
+        contentAgeRestriction:
+          type: string
+          enum: ["SeventeenPlus", "ThirteenPlus", "NinePlus", "AllAges"]
+          description: The user's content age restriction.
+        privateServerJoinRestriction:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: The user's private server join restriction.
+        themeType:
+          type: string
+          enum: ["Light", "Dark"]
+          description: The user's theme type.
+        canUploadContacts:
+          type: boolean
+          nullable: true
+          description: Whether the user can upload contacts.
+        whoCanMessageMe:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: The user's who can message me setting.
+        whoCanChatWithMe:
+          type: string
+          enum: ["NoOne", "AllUsers"]
+          description: Who you can chat with in-game.
+        whoCanChatWithMeInApp:
+          type: string
+          enum: ["NoOne", "Friends"]
+          description: Who you can chat with in the app.
+        whoCanJoinMeInExperiences:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: Who you can join you in experiences you're playing.
+        voiceChatOptIn:
+          type: boolean
+          description: Whether you can use voice chat.
+        whoCanSeeMyInventory:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: Who can see your inventory.
+        whoCanTradeWithMe:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: Who can trade with you.
+        tradeQualityFilter:
+          type: string
+          enum: ["High", "Medium", "Low"]
+          description: The trade quality filter. The values might be incorrect, this setting does not appear to be visible on the website anymore.
+        xboxCrossPlaySetting:
+          type: object
+          properties:
+            userId:
+              type: integer
+              description: The user ID of the Xbox Cross Play setting.
+            isEnabled:
+              type: boolean
+              description: Whether Xbox Cross Play is enabled.
+            created:
+              type: string
+              description: The timestamp when the Xbox Cross Play setting was created.
+            updated:
+              type: string
+              description: The timestamp when the Xbox Cross Play setting was last updated.
+        privateServerInvitePrivacy:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllAuthenticatedUsers"] # Unsure of why this is different for "AllUsers"
+          description: The private server invite privacy setting.
+        privateServerPrivacy:
+          type: string
+          enum: ["NoOne", "Friends", "Following", "Followers", "AllUsers"]
+          description: The private server privacy setting.
+        boundAuthTokenValidation:
+          type: string
+          enum: ["Enabled", "Disabled"]
+          description: Unsure what this does.
+        friendSuggestions:
+          type: string
+          enum: ["Enabled", "Disabled"]
+          description: Unsure what this does.
+        updateFriendsAboutMyActivity:
+          type: string
+          enum: ["No", "Yes"]
+          description: Share your activity with your friends.
+        allowSellShareData:
+          type: string
+          enum: ["Disabled", "Enabled"]
+          description: Determines if Roblox is allowed to sell your data with advertising partners.
+        allowPersonalizedAdvertising:
+          type: string
+          enum: ["Disabled", "Enabled"]
+          description: Determines if Roblox is allowed to personalize ads based on your activity.
+
+    # Marketplace Items
+    MarketplaceItems_DetailsBody:
+      type: object
+      properties:
+        itemIds:
+          type: array
+          items:
+            type: string
+            example: "00000000-0000-0000-0000-000000000000"
+    MarketplaceItems_DetailsResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          collectibleItemId:
+            type: string
+          name:
+            type: string
+          description:
+            type: string
+          collectibleProductId:
+            type: string
+          itemType:
+            type: integer
+          itemRestrictions:
+            type: object
+            nullable: true
+          creatorHasVerifiedBadge:
+            type: boolean
+          creatorType:
+            type: string
+            enum: ["Group", "User"]
+          itemTargetId:
+            type: integer
+            description: The Asset ID of the item, as shown in the URL of the item.
+          itemTargetType:
+            type: integer
+          creatorId:
+            type: integer
+          creatorName:
+            type: string
+          price:
+            type: integer
+          lowestPrice:
+            type: integer
+          hasResellers:
+            type: boolean
+          unitsAvailableForConsumption:
+            type: integer
+          offSaleDeadline:
+            type: string
+            example: "0001-01-01T00:00:00"
+          assetStock:
+            type: integer
+          errorCode:
+            type: integer
+            nullable: true
+          saleLocationType:
+            type: string
+            enum: ["ShopAndAllExperiences"] # TODO: figure out what other values this can be
+          universeIds:
+            type: array
+            items:
+              type: integer
+          experiences:
+            type: array
+            items:
+              type: integer # TODO: figure out what this is
+          sales:
+            type: integer
+          lowestResalePrice:
+            type: integer
+          quantityLimitPerUser:
+            type: integer
+          lowestAvailableResaleProductId:
+            type: string
+            nullable: true
+          lowestAvailableResaleItemInstanceId:
+            type: string
+            nullable: true
+          resaleRestriction:
+            type: integer
+          productSaleStatus:
+            type: integer
+          productTargetId:
+            type: integer
+    MarketplaceItems_ResellersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              collectibleProductId:
+                type: string
+              collectibleItemInstanceId:
+                type: string
+              seller:
+                type: object
+                properties:
+                  hasVerifiedBadge:
+                    type: boolean
+                  sellerId:
+                    type: integer
+                  sellerType:
+                    type: string
+                    enum: ["User"]
+                  name:
+                    type: string
+              price:
+                type: integer
+              serialNumber:
+                type: string
+              errorMessage:
+                type: string
+                default: null
+                nullable: true
+        previousPageCursor:
+          type: string
+          nullable: true
+        nextPageCursor:
+          type: string
+          nullable: true
+
+    # Account Switcher
+    AccountSwitcher_GetLoggedInUsersMetadataBody:
+      type: object
+      default: {}
+    AccountSwitcher_GetLoggedInUsersMetadataResponse:
+      type: object
+      properties:
+        logged_in_users_metadata:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: integer
+              username:
+                type: string
+              display_name:
+                type: string
+        active_user_id:
+          type: integer
+        encrypted_users_data_blob:
+          type: string
+        removed_user_metadata:
+          type: object
+          properties:
+            user_id:
+              type: integer
+            username:
+              type: string
+            display_name:
+              type: string
+
+    # Profile Insights
+    ProfileInsights_GetMultiInsightsBody:
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+        count:
+          type: integer
+          default: 10
+    ProfileInsights_GetMultiInsightsResponse:
+      type: object
+      properties:
+        userInsights:
+          type: array
+          items:
+            type: object
+            properties:
+              targetUser:
+                type: integer
+              profileInsights:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    insightCase:
+                      type: integer
+                      description: The case ID of the insight. This determines what the insight is.
+                    mutualFriendInsight:
+                      type: object
+                      nullable: true
+                      description: The mutual friend insight. This relates to `insightCase` being 1.
+                      properties:
+                        mutualFriends:
+                          type: object
+                          properties:
+                            "0":
+                              type: object
+                              properties:
+                                username:
+                                  type: string
+                                displayName:
+                                  type: string
+                    offlineFrequentsInsight:
+                      type: object
+                      nullable: true
+                      description: The offline frequents insight. This relates to `insightCase` being 3.
+                      properties:
+                        havePlayedTogether:
+                          type: boolean
+
+    # Profile Platform
+    ProfilePlatform_GetBody:
+      type: object
+      properties:
+        profileType:
+          type: string
+          enum: ["User"]
+        profileId:
+          type: integer
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              component:
+                type: string
+                enum: ["About", "Actions", "SocialLinks", "CurrentlyWearing", "ViewFullProfile", "UserProfileHeader"]
+        includeComponentOrdering:
+          type: boolean
+    ProfilePlatform_GetResponse:
+      type: object
+      properties:
+        profileType:
+          type: string
+          enum: ["User"]
+        profileId:
+          type: integer
+        componentOrdering:
+          type: array
+          items:
+            type: string
+            enum: ["About", "Actions", "SocialLinks", "CurrentlyWearing", "ViewFullProfile", "UserProfileHeader"]
+        components:
+          type: object
+          properties:
+            UserProfileHeader:
+              type: object
+              nullable: true
+              properties:
+                userId:
+                  type: integer
+                isPremium:
+                  type: boolean
+                isVerified:
+                  type: boolean
+                counts:
+                  type: object
+                  properties:
+                    friendsCount:
+                      type: integer
+                    followersCount:
+                      type: integer
+                    followingCount:
+                      type: integer
+                names:
+                  type: object
+                  properties:
+                    primaryName:
+                      type: string
+                    username:
+                      type: string
+                contextualInformation:
+                  type: object
+                  properties:
+                    context:
+                      type: string
+                      enum: ["None"]
+                editName:
+                  type: string # TODO: figure out if this is really a string
+                  nullable: true
+            About:
+              type: object
+              nullable: true
+              properties:
+                description:
+                  type: string
+            SocialLinks:
+              type: object
+              nullable: true
+              properties:
+                facebook:
+                  type: string
+                  nullable: true
+                twitter:
+                  type: string
+                  nullable: true
+                youtube:
+                  type: string
+                  nullable: true
+                twitch:
+                  type: string
+                  nullable: true
+                guilded:
+                  type: boolean
+                  nullable: true
+            CurrentlyWearing:
+              type: object
+              nullable: true
+              properties:
+                assets:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      assetId:
+                        type: integer
+            ViewFullProfile:
+              type: object
+              nullable: true
+              properties:
+                userId:
+                  type: integer
+            Actions:
+              type: object
+              nullable: true
+              properties:
+                primary:
+                  type: string
+                  enum: ["AddFriend", "EditProfile", "JoinExperience"]
+                secondary:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                    enum: ["QrCode"]
+                contextual:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["Chat", "EditAlias", "Report", "Block", "Unfriend"]
+                  example: ["Chat", "EditAlias", "Report", "Block", "Unfriend"]
+                  nullable: true
+
+    # Community
+    Community_GetUniverseCommunityResponse:
+      type: object
+      properties:
+        communityId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        iconAssetId:
+          type: integer
+        bannerAssetId:
+          type: integer
+        visibility:
+          type: string
+          enum: ["public"]
+        createdAt:
+          type: string
+          example: "2024-04-25T15:02:18"
+        announcementChannelId:
+          type: string
+          nullable: true
+
+    # Voting
+    Voting_GetVoteCountResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        voteCount:
+          type: integer
+        targetType:
+          type: string
+          enum: ["Place", "Image", "Audio", "Model"]
+        platformTypeId:
+          type: integer
+
+    # Phone Numbers
+    PhoneNumber_PhonePrefixListResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+            description: Country Name
+          code:
+            type: string
+            description: Country Code
+          prefix:
+            type: string
+            description: Phone number prefix
+          localizedName:
+            type: string
+            description: Localized country name
+          isDefault:
+            type: boolean
+
+    # Share Links
+    ShareLinks_GetOrCreateLinkBody:
+      type: object
+      properties:
+        linkType:
+          type: string
+          enum: ["Profile"]
+          description: The type of link to create.
+    ShareLinks_GetOrCreateLinkResponse:
+      type: object
+      properties:
+        linkId:
+          type: string
+        deepLinkUrl:
+          type: string
+        shortUrl:
+          type: string
 
     DetailsNotFoundResponse:
       type: object
@@ -733,11 +1824,20 @@ components:
           type: string
           description: "The field that has the error."
   securitySchemes:
+    CSRF:
+      type: apiKey
+      in: header
+      name: "x-csrf-token"
+      description: "CSRF token. This helps prevent CSRF attacks, and is required for some endpoints."
     UserAccount:
       type: apiKey
       in: cookie
       name: ".ROBLOSECURITY"
       description: "Roblox authentication cookie. This is the least secure way to authenticate, but sometimes it's the only way."
+    BrowserTrackerID:
+      type: apiKey
+      in: cookie
+      name: "RBXEventTrackerV2"
     OpenCloudAPIKey:
       type: apiKey
       name: "x-api-key"
