@@ -1,0 +1,772 @@
+openapi: "3.0.3"
+info:
+  title: apis.roblox.com
+  description: ""
+  version: "1.0"
+servers:
+  - url: https://apis.roblox.com/
+
+paths:
+  # Maintenance Status
+  /maintenance-status/v1/alerts/alert-info: # Get maintenance status
+    get:
+      summary: Get maintenance status
+      security: []
+      tags:
+        - Maintenance Status
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceStatus_AlertInfoResponse"
+
+  # Gamepasses
+  /game-passes/v1/game-passes: # Create a Gamepass
+    post:
+      summary: Create a Gamepass
+      tags:
+        - Gamepasses
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/Gamepass_CreateBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gamepass_CreateResponse"
+  /game-passes/v1/game-passes/{gamePassId}/details: # Get Gamepass details
+    get:
+      summary: Get Gamepass details
+      description: Get details of a Gamepass. This does not require authentication, however you may experience better rate limits if you are.
+      parameters:
+        - name: gamePassId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Gamepasses
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gamepass_DetailsResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetailsNotFoundResponse"
+
+    post:
+      summary: Update a Gamepass
+      description: Update a Gamepass. This requires authentication.
+      tags:
+        - Gamepasses
+      parameters:
+        - name: gamePassId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/Gamepass_UpdateBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/EmptyBody"
+  /game-passes/v1/game-passes/{gamePassId}/product-info: # Get Gamepass product info
+    get:
+      summary: Get Gamepass product info (e.g. MarketplaceService:GetProductInfo())
+      description: There are invalid fields in the response, but it's decent enough.
+      security: []
+      parameters:
+        - name: gamePassId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Gamepasses
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gamepass_ProductInfoResponse"
+
+  # Developer Products
+  /developer-products/v1/universes/{universeId}/developerproducts: # Create a Developer Product
+    post:
+      summary: Create a Developer Product
+      description: Create a Developer Product. This requires authentication.
+      tags:
+        - Developer Products
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: description
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: priceInRobux
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperProduct_CreateResponse"
+  /developer-products/v1/developer-products/{devProductId}: # Get Developer Product details by Developer Product ID
+    get:
+      summary: Get Developer Product details by Developer Product ID
+      description: |
+        Developer products have a different internal ID, and this endpoint uses that ID instead of the usual one.
+        This does not require authentication.
+      parameters:
+        - name: devProductId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Developer Products
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperProduct_DevProductIDDetailsResponse"
+  /developer-products/v1/developer-products/{productId}/details: # Get Developer Product details by Product ID
+    get:
+      summary: Get Developer Product details by Product ID
+      description: Get the details of a Developer Product by it's typically used ID. This does not require authentication.
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Developer Products
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeveloperProduct_DetailsResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetailsNotFoundResponse"
+  /developer-products/v1/universes/{universeId}/developerproducts/{productId}/update: # Update a Developer Product
+    get:
+      summary: Update a Developer Product
+      security:
+        - OpenCloudAPIKey: []
+
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Developer Products
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyBody"
+
+  # Assets
+  /assets/user-auth/v1/assets/{assetId}:
+    get:
+      summary: Get uploaded asset metadata (not extensive)
+      description: Get the metadata of an uploaded asset. This does not require authentication.
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Assets
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assets_MetadataResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assets_BadRequestResponse"
+
+  # Universes
+  /universes/v1/universes/create:
+    post:
+      summary: Create a new Experience
+      security:
+        - UserAccount: []
+      tags:
+        - Universes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Universe_CreateBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Universe_CreateResponse"
+  /universes/v1/user/universes/{universeId}/places:
+    post:
+      summary: Create a place within an Experience
+      security:
+        - UserAccount: []
+      tags:
+        - Universes
+      parameters:
+        - name: universeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Universe_CreateBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Universe_CreatePlaceResponse"
+
+components:
+  schemas:
+    EmptyObject:
+      type: object
+      description: An empty object.
+    EmptyBody:
+      type: string
+      description: An empty body.
+      example: ""
+
+    # Maintenance Status
+    MaintenanceStatus_AlertInfoResponse:
+      type: object
+      properties:
+        IsVisible:
+          type: boolean
+        Text:
+          type: string
+        LinkUrl:
+          type: string
+
+    # Gamepasses
+    Gamepass_CreateBody:
+      type: object
+      properties:
+        Name:
+          type: string
+          description: The name of the Gamepass.
+        Description:
+          type: string
+          description: The description of the Gamepass.
+        UniverseId:
+          type: integer
+          description: The universe ID this Gamepass is for.
+    Gamepass_CreateResponse:
+      type: object
+      properties:
+        gamePassId:
+          type: integer
+          description: The ID of the Gamepass that was created.
+    Gamepass_UpdateBody:
+      type: object
+      properties:
+        Name:
+          type: string
+          description: The name of the Gamepass.
+        Description:
+          type: string
+          description: The description of the Gamepass.
+    Gamepass_DetailsResponse:
+      type: object
+      description: A Gamepass object.
+      properties:
+        gamePassId:
+          type: integer
+          description: The Gamepass ID.
+        name:
+          type: string
+          description: The Gamepass name.
+        description:
+          type: string
+          description: The Gamepass description.
+        isForSale:
+          type: boolean
+          description: Whether the Gamepass is for sale.
+        price:
+          type: integer
+          description: The Gamepass price.
+          nullable: true
+        iconAssetId:
+          type: integer
+          description: The Gamepass icon asset ID.
+        placeId:
+          type: integer
+          description: The place ID this Gamepass is for.
+        marketPlaceFeesPercentage:
+          type: number
+          description: The marketplace fees percentage.
+          example: 0.3
+        gamePassSalesData:
+          type: object
+          properties:
+            totalSales:
+              type: integer
+              description: The total sales for this Gamepass.
+            salesPast7Days:
+              type: integer
+              description: The sales for this Gamepass in the past 7 days.
+        createdTimestamp:
+          type: string
+          description: The timestamp when the Gamepass was created.
+          example: "2021-01-01T00:00:00Z"
+        updatedTimestamp:
+          type: string
+          description: The timestamp when the Gamepass was last updated.
+          example: "2021-01-01T00:00:00Z"
+        priceInformation:
+          description: The price information for the Gamepass. Seems to be some internal data for Roblox.
+          nullable: true
+          type: object
+          properties:
+            defaultPriceInRobux:
+              type: integer
+              description: The default price in Robux. This is the same as the `price` property.
+            isInActivePriceOptimizationExperiment:
+              type: boolean
+              description: Whether the Gamepass is in the active price optimization experiment. Internal Roblox stuff.
+    Gamepass_ProductInfoResponse:
+      type: object
+      properties:
+        TargetId:
+          type: integer
+        ProductType:
+          type: string
+          nullable: true
+        AssetId:
+          type: integer
+        ProductId:
+          type: integer
+        Name:
+          type: string
+        Description:
+          type: string
+        AssetTypeId:
+          type: integer
+          nullable: true
+        Creator:
+          type: object
+          properties:
+            Id:
+              type: integer
+            Name:
+              type: string
+              nullable: true
+            CreatorType:
+              type: string
+              nullable: true
+            CreatorTargetId:
+              type: integer
+              nullable: true
+        IconImageAssetId:
+          type: integer
+        Created:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+        Updated:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+        PriceInRobux:
+          type: integer
+          nullable: true
+        PriceInTickets:
+          type: integer
+          nullable: true
+        IsNew:
+          type: boolean
+        IsForSale:
+          type: boolean
+        IsPublicDomain:
+          type: boolean
+        IsLimited:
+          type: boolean
+        IsLimitedUnique:
+          type: boolean
+        Remaining:
+          type: integer
+          nullable: true
+        Sales:
+          type: integer
+          nullable: true
+        MinimumMembershipLevel:
+          type: integer
+
+    # Developer Products
+    DeveloperProduct_CreateResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Developer Product's Developer Product ID.
+        name:
+          type: string
+          description: The Developer Product's name.
+        Description:
+          type: string
+          description: The Developer Product's description. Yes, it's capitalized.
+        shopId:
+          type: integer
+          description: The Universe ID this Developer Product is for.
+        iconImageAssetId:
+          type: integer
+          description: The Developer Product's icon image asset ID.
+          nullable: true
+    DeveloperProduct_DevProductIDDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The Developer Product's Asset ID. You can use this with the `/developer-products/v1/developer-products/{id}/details` endpoint.
+        productTypeId:
+          type: integer
+        isPublicDomain:
+          type: boolean
+        isForSale:
+          type: boolean
+        priceInRobux:
+          type: integer
+        premiumPriceInRobux:
+          type: integer
+        robloxProductId:
+          type: integer
+        targetId:
+          type: integer
+          description: The Developer Product's Developer Product ID.
+        assetTypeId:
+          type: integer
+          nullable: true
+        creatorId:
+          type: integer
+        assetGenres:
+          type: integer
+        assetCategories:
+          type: integer
+        affiliateFeePercentage:
+          type: integer
+          nullable: true
+        isNew:
+          type: boolean
+        created:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+        updated:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+    DeveloperProduct_DetailsResponse:
+      type: object
+      properties:
+        DisplayName:
+          type: string
+        DisplayDescription:
+          type: string
+        DisplayIconImageAssetId:
+          type: integer
+        PriceInformation:
+          type: object
+          nullable: true
+        TargetId:
+          type: integer
+          description: The Developer Product's Developer Product ID. You can use this with the `/developer-products/v1/developer-products/{id}` endpoint.
+        ProductType:
+          type: string
+          enum:
+            - "Developer Product"
+        AssetId:
+          type: integer
+          description: See `ProductId` below.
+        ProductId:
+          type: integer
+          description: The Developer Product's Product ID. You can use this with the `/developer-products/v1/developer-products/{id}/details` endpoint.
+        Name:
+          type: string
+        Description:
+          type: string
+        AssetTypeId:
+          type: integer
+          nullable: true
+        Creator:
+          type: object
+          properties:
+            Id:
+              type: integer
+            Name:
+              type: string
+              nullable: true
+            CreatorType:
+              type: string
+              nullable: true
+            CreatorTargetId:
+              type: integer
+              nullable: true
+        IconImageAssetId:
+          type: integer
+        Created:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+        Updated:
+          type: string
+          example: "2024-01-01T00:00:00.000Z"
+        PriceInRobux:
+          type: integer
+          nullable: true
+        PremiumPriceInRobux:
+          type: integer
+          nullable: true
+        PriceInTickets:
+          type: integer
+          nullable: true
+        IsNew:
+          type: boolean
+        IsForSale:
+          type: boolean
+        IsPublicDomain:
+          type: boolean
+        IsLimited:
+          type: boolean
+        IsLimitedUnique:
+          type: boolean
+        Remaining:
+          type: integer
+          nullable: true
+        Sales:
+          type: integer
+          nullable: true
+        MinimumMembershipLevel:
+          type: integer
+    DeveloperProduct_UpdateBody:
+      type: object
+      properties:
+        Name:
+          type: string
+          description: The name of the Developer Product.
+        Description:
+          type: string
+          description: The description of the Developer Product.
+        PriceInRobux:
+          example: null
+          type: integer
+          description: The price of the Developer Product in Robux.
+
+    # Assets
+    Assets_MetadataResponse:
+      type: object
+      properties:
+        path:
+          type: string
+        revisionId:
+          type: integer
+          description: The version of the asset.
+        revisionCreateTime:
+          type: string
+          description: The timestamp when the asset was last updated.
+        assetId:
+          type: string
+          description: The asset ID as a string.
+        displayName:
+          type: string
+        assetType:
+          type: string
+          description: "The asset type. See: https://create.roblox.com/docs/reference/engine/enums/AssetType"
+        creationContext:
+          type: object
+          properties:
+            creator:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  nullable: true
+                groupId:
+                  type: integer
+                  nullable: true
+        moderationResult:
+          type: object
+          properties:
+            moderationState:
+              type: string
+        state:
+          type: string
+    Assets_BadRequestResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    # Universes
+    Universe_CreateBody:
+      type: object
+      properties:
+        templatePlaceId:
+          type: integer
+          description: The place ID of the template to use.
+          example: 95206881
+    Universe_CreateResponse:
+      type: object
+      properties:
+        rootPlaceId:
+          type: integer
+          description: The place ID of the root place.
+        universeId:
+          type: integer
+          description: The Universe ID.
+    Universe_CreatePlaceResponse:
+      type: object
+      properties:
+        placeId:
+          type: integer
+          description: The place ID.
+
+    # User Profile
+    UserProfile_FieldsEnum:
+      type: string
+      enum:
+        - "names.username"
+        - "names.combinedName"
+        - "names.alias"
+        - "names.displayName"
+        - "names.contactName"
+        - "names.platformName"
+    UserProfile_GetProfilesBody:
+      type: object
+      properties:
+        userIds:
+          type: array
+          description: The user IDs to get profiles for.
+          items:
+            type: integer
+        fields:
+          type: array
+          description: The fields to get for each user.
+          items:
+            type: string
+            $ref: "#/components/schemas/UserProfile_FieldsEnum"
+
+    DetailsNotFoundResponse:
+      type: object
+      description: The requested resource was not found.
+      properties:
+        errorCode:
+          type: string
+          example: "string" # enum shows first element, but we don't want that really.
+          enum:
+            - "PassNotFound"
+            - "InvalidProductId"
+        errorMessage:
+          type: string
+          description: "A human-readable error message."
+        field:
+          type: string
+          description: "The field that has the error."
+  securitySchemes:
+    UserAccount:
+      type: apiKey
+      in: cookie
+      name: ".ROBLOSECURITY"
+      description: "Roblox authentication cookie. This is the least secure way to authenticate, but sometimes it's the only way."
+    OpenCloudAPIKey:
+      type: apiKey
+      name: "x-api-key"
+      in: header
+    OpenCloudOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: "https://apis.roblox.com/oauth/v1/authorize"
+          tokenUrl: "https://apis.roblox.com/oauth/v1/token"
+          scopes:
+            "openid": OpenID Connect
+            "profile": Profile
+            "asset:read": Read assets
+            "asset:write": Write assets
+            "creator-store-product:read": Read creator store products
+            "creator-store-product:write": Write creator store products
+            "group:read": "Read information about groups you're a part of."
+            "group:write": "Manage join requests for groups you're a part of and have permission to manage."
+            "legacy-universe.badge:write": "Update badges."
+            "legacy-universe.following:read": "Read information about experiences you're following."
+            "legacy-universe.following:write": "Manage followed experiences."
+            "universe-messaging-service:publish": "Publish messages to the messaging service."
+            "universe:write": "Update experiences."
+            "universe.place:write": "Update places within experiences."
+            "universe.subscription-product.subscription:read": "Read information about subscriptions."
+            "universe.user-restriction:read": "Read information about users banned from your experiences."
+            "universe.user-restriction:write": "Manage user restrictions."
+            "user.advanced:read": "Read information about your account."
+            "user.inventory-item:read": "Read information about your inventory."
+            "user.social:read": "Read information about your social connections."
+            "user.user-notification:write": "Send notifications from your experience to your players."
