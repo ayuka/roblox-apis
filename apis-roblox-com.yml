@@ -12,6 +12,8 @@ info:
     - "BrowserTrackerID" is the "RBXEventTrackerV2" cookie
     - "SessionID" for Discovery API is the "RBXSessionTracker" cookie
     - Asset types can be found here: [https://create.roblox.com/docs/reference/engine/enums/AssetType](https://create.roblox.com/docs/reference/engine/enums/AssetType)
+    - Use `https://apis.roblox.com/user/cloud/v2` to access Open Cloud endpoints with cookie authentication.
+      - Not everything seems to work, but universes seems solid from quick testing.
 
     ## TODO
     - Add /discovery-api/ endpoints
