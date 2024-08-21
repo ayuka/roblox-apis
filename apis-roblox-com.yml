@@ -11,6 +11,7 @@ info:
       - The "Product ID" is what most people are familiar with, while "Developer Product ID" is something seperate that's used internally.
     - "BrowserTrackerID" is the "RBXEventTrackerV2" cookie
     - "SessionID" for Discovery API is the "RBXSessionTracker" cookie
+    - Asset types can be found here: [https://create.roblox.com/docs/reference/engine/enums/AssetType](https://create.roblox.com/docs/reference/engine/enums/AssetType)
 
     ## TODO
     - Add /discovery-api/ endpoints
@@ -456,6 +457,186 @@ paths:
               schema:
                 $ref: "#/components/schemas/Universe_GetUniverseResponse"
 
+  # Organizations (Creator Groups)
+  /orgs/v1/organizations:
+    get:
+      summary: Get org for a group
+      security:
+        - UserAccount: []
+      parameters:
+        - name: groupId
+          in: query
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Organizations (Creator Groups)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Orgs_GetOrgResponse"
+  /orgs/v1/organizations/{orgId}/users/{userId}/permissions:
+    get:
+      summary: Get permissions for a user in an org
+      description: This only works for the authenticated user.
+      security:
+        - UserAccount: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Organizations (Creator Groups)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Orgs_GetUserPermissionsResponse"
+  /orgs/v1/organizations/{orgId}/users:
+    get:
+      summary: Get users in an org
+      security:
+        - UserAccount: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Organizations (Creator Groups)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Orgs_GetUsersResponse"
+  /orgs/v1/organizations/{orgId}/roles:
+    get:
+      summary: Get roles in an org
+      security:
+        - UserAccount: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Organizations (Creator Groups)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Orgs_GetRolesResponse"
+  /orgs/v1/organizations/{orgId}/roles/{roleId}/permissions:
+    get:
+      summary: Get permissions for a role in an org
+      security:
+        - UserAccount: []
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      tags:
+        - Organizations (Creator Groups)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Orgs_GetRolePermissionsResponse"
+    patch:
+      summary: Update a role's permissions
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Organizations (Creator Groups)
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Orgs_UpdateRolePermissionsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+  /orgs/v1/organizations/{orgId}/users/{userId}/roles/{roleId}:
+    post:
+      summary: Add a user to a role
+      security:
+        - UserAccount: []
+        - CSRF: []
+      tags:
+        - Organizations (Creator Groups)
+      parameters:
+        - name: orgId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
   # Cloud Authentication
   /cloud-authentication/v1/apiKey/{apiKeyId}:
     get:
@@ -688,6 +869,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfilePlatform_GetResponse"
+
+  # Creator Home
+  /creator-home-api/v1/groups:
+    get:
+      summary: Get groups you are a creator in
+      description: This returns groups that you can create experiences or marketplace items in.
+      security:
+        - UserAccount: []
+      tags:
+        - Creator Home
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatorHome_GetGroupsResponse"
+
+  # Toolbox Service
+  /toolbox-service/v1/items/details:
+    get:
+      summary: Get details of items you've created
+      description: This only returns items you or a group you're a creator in have created.
+      security:
+        - UserAccount: []
+      tags:
+        - Toolbox Service
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolboxService_GetItemsDetailsResponse"
+        "404":
+          description: Not Found
+  /toolbox-service/v1/creations/{subjectType}/{subjectId}/{assetTypeId}:
+    get:
+      summary: Get creations
+      security:
+        - UserAccount: []
+      tags:
+        - Toolbox Service
+      parameters:
+        - name: subjectType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: ["group", "user"]
+        - name: subjectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: assetTypeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolboxService_GetCreationsResponse"
 
   # Community
   /community-links/v1/universes/{universeId}/community:
@@ -1273,6 +1521,99 @@ components:
           type: integer
           description: The Universe ID.
 
+    # Organizations (Creator Groups)
+    Orgs_Role:
+      type: object
+      properties:
+        id:
+          type: string
+        organizationId:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        updatedTime:
+          type: string
+          example: "2021-01-01T00:00:0000000Z"
+    Orgs_RolePermission:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: ["Organization", "Experience"]
+        operation:
+          type: string
+          enum: ["ManageMembers", "ManageRoles", "Configure", "Play", "Edit", "ViewAnalytics"]
+        enabled:
+          type: boolean
+    Orgs_GetOrgResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "0"
+        groupId:
+          type: string
+          example: "0"
+    Orgs_GetUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              userId:
+                type: integer
+              roles:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Orgs_Role"
+        pageToken:
+          type: string
+    Orgs_GetRolesResponse:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Orgs_Role"
+        pageToken:
+          type: string
+    Orgs_GetRolePermissionsResponse:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Orgs_RolePermission"
+    Orgs_UpdateRolePermissionsBody:
+      $ref: "#/components/schemas/Orgs_GetRolePermissionsResponse"
+    Orgs_GetUserPermissionsResponse:
+      type: object
+      properties:
+        isOwner:
+          type: boolean
+        canConfigureOrganization:
+          type: boolean
+        canManageRoles:
+          type: boolean
+        canManageMembers:
+          type: boolean
+        canViewAnalytics:
+          type: boolean
+        canPlayExperiences:
+          type: boolean
+        canEditExperiences:
+          type: boolean
+        canConfigureRevenueDetails:
+          type: boolean
+        canViewRevenueDetails:
+          type: boolean
+        canAdvertiseGroup:
+          type: boolean
+
     # Cloud Authentication
     CloudAuthentication_Scopes:
       type: array
@@ -1291,7 +1632,6 @@ components:
             items:
               type: string
               example: "read"
-
     CloudAuthentication_CloudAuthUserConfiguredProperties:
       type: object
       properties:
@@ -1308,7 +1648,6 @@ components:
             example: "0.0.0.0/0"
         scopes:
           $ref: "#/components/schemas/CloudAuthentication_Scopes"
-
     CloudAuthentication_CloudAuthInfo:
       type: object
       properties:
@@ -1340,7 +1679,6 @@ components:
         updatedTime:
           type: string
           example: "2021-01-01T00:00:00.000Z"
-
     CloudAuthentication_CreateApiKeyBody:
       type: object
       properties:
@@ -1354,7 +1692,6 @@ components:
           description: If specified, it will update the API key with the specified ID. Otherwise, a new API key will be created.
         cloudAuthUserConfiguredProperties:
           $ref: "#/components/schemas/CloudAuthentication_CloudAuthUserConfiguredProperties"
-
     CloudAuthentication_CloudAuthInfoResponse:
       type: object
       properties:
@@ -1869,6 +2206,149 @@ components:
                     enum: ["Chat", "EditAlias", "Report", "Block", "Unfriend"]
                   example: ["Chat", "EditAlias", "Report", "Block", "Unfriend"]
                   nullable: true
+
+    # Creator Home
+    CreatorHome_GetGroupsResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          groups:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                roleSetName:
+                  type: string
+
+    # Toolbox Service
+    ToolboxService_GetItemsDetailsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              voting:
+                type: object
+                properties:
+                  showVotes:
+                    type: boolean
+                  upVotes:
+                    type: integer
+                  downVotes:
+                    type: integer
+                  canVote:
+                    type: boolean
+                  userVote:
+                    type: integer # TODO: figure out what this is
+                    nullable: true
+                  hasVoted:
+                    type: boolean
+                  voteCount:
+                    type: integer
+                  upVotePercent:
+                    type: number
+              creator:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  type:
+                    type: integer
+                  isVerifiedCreator:
+                    type: boolean
+                  latestGroupUpdaterUserId:
+                    type: integer
+                  latestGroupUpdaterUserName:
+                    type: string
+              asset:
+                type: object
+                properties:
+                  audioDetails:
+                    type: object
+                    nullable: true
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  typeId:
+                    type: integer
+                  assetSubTypes:
+                    type: array
+                  assetGenres:
+                    type: array
+                    items:
+                      type: string
+                  ageGuidelines:
+                    type: object
+                    nullable: true
+                  isEndorsed:
+                    type: boolean
+                  description:
+                    type: string
+                  duration:
+                    type: integer
+                  hasScripts:
+                    type: boolean
+                  createdUtc:
+                    type: string
+                    example: "2021-01-01T00:00:0000000Z"
+                  updatedUtc:
+                    type: string
+                    example: "2021-01-01T00:00:0000000Z"
+                  creatingUniverseId:
+                    type: integer
+                    nullable: true
+                  isAssetHashApproved:
+                    type: boolean
+                  visibilityStatus:
+                    type: integer
+                  socialLinks:
+                    type: array
+                    items:
+                      type: string # TODO: figure out what this is
+    ToolboxService_GetCreationsResponse:
+      type: object
+      properties:
+        totalResults:
+          type: integer
+        filteredKeyword:
+          type: string
+        searchDebugInfo:
+          type: object
+          default: unknown
+          nullable: true
+        queryFacets:
+          type: object
+          default: unknown
+          nullable: true
+        imageSearchStatus:
+          type: object
+          default: unknown
+          nullable: true
+        previousPageCursor:
+          type: string
+          nullable: true
+        nextPageCursor:
+          type: string
+          nullable: true
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
 
     # Community
     Community_GetUniverseCommunityResponse:
