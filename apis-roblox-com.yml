@@ -356,6 +356,12 @@ paths:
       security:
         - UserAccount: []
         - CSRF: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: integer
       tags:
         - Asset Permissions
       requestBody:
@@ -1655,6 +1661,8 @@ components:
           type: string
         cloudAuthBadStatus:
           type: array
+          items:
+            type: string
         cloudAuthUserConfiguredProperties:
           $ref: "#/components/schemas/CloudAuthentication_CloudAuthUserConfiguredProperties"
         createdTime:
@@ -1728,6 +1736,8 @@ components:
         errors:
           type: array # TODO: figure out what errors this returns
           example: []
+          items:
+            type: string
         profileDetails:
           type: array
           items:
