@@ -1,6 +1,6 @@
 openapi: "3.0.3"
 info:
-  title: BEDEV2 - apis.roblox.com
+  title: apis.roblox.com
   description: |
     ## **DO NOT ENTER SENSITIVE INFORMATION HERE.**
     ### You cannot make requests from this page due to CORS. Anything requiring authentication is to share what types of auth you need to use for an endpoint.
